@@ -7,16 +7,9 @@ const missions = [
 {title:'風險管理',level:'Risk Lab',icon:'◎',desc:'用蒙地卡羅模擬、VaR、CVaR、最大回撤與破產機率評估資金風險。',goal:'建立可調整本金、期間與模擬次數的風險實驗，理解極端損失、回撤與模型假設的影響。',tools:'Python、numpy、matplotlib、Monte Carlo Simulation。',flow:['定義報酬模型、估計期間、本金與風險門檻。','固定隨機種子，產生多條資金路徑。','以損失分配計算指定信賴水準的 VaR 與 CVaR。','比較壓力情境、路徑最大回撤及跌破資金門檻的機率。'],prompt:'請建立 Monte Carlo 風險管理教學模組，允許設定初始本金、期間、模擬次數、平均報酬、波動與隨機種子。請明確說明機率模型與時間單位，繪製資金路徑及期末損益分配，以損失為正值計算 95% VaR、CVaR，並估計路徑最大回撤與跌破指定資金門檻的機率。比較高波動與負報酬壓力情境。',colab:'先使用小量路徑檢查計算，再提高模擬次數並比較估計穩定度。調整假設參數，觀察尾部損失如何改變。',risk:'VaR 不是最壞損失上限。模擬結果依賴模型與參數；未納入的跳躍、流動性與制度變化可能讓真實損失更大。',checks:['VaR 與 CVaR 的損失符號一致','已定義資金門檻與期間','已比較至少兩個壓力情境']},
 {title:'部署 AI 投資分析平台',level:'Deploy',icon:'↗',desc:'用 Streamlit 與 Gemini API 把前面成果整合成網站。',goal:'將已完成的 Python 分析模組整合為可操作、可展示的 Streamlit 網站，加入輸入檢查與報告匯出。',tools:'Streamlit、GitHub、Gemini API、Python requirements.txt。',flow:['把資料、指標、回測與風險計算拆分為獨立模組。','建立 Streamlit 側欄與分析分頁，加入載入狀態與錯誤處理。','使用環境變數或 Secrets 管理 API 金鑰。','測試後部署，檢查空資料、API 失敗與不同螢幕尺寸。'],prompt:'請將前面五個任務整合成 Streamlit 教學應用，提供股票與日期輸入、技術分析、策略回測、AI 報告、投資組合與風險模擬分頁。計算模組與介面分開，加入輸入驗證、快取與錯誤提示。Gemini 金鑰從 st.secrets 或環境變數讀取，請提供 requirements.txt 與部署說明，不得把金鑰寫入 GitHub。',colab:'先確認每個 Python 模組可獨立執行，再移至本機或雲端 Streamlit 環境。Colab 用於分析實驗，正式介面由 Streamlit 執行。',risk:'公開部署前檢查金鑰、個人資料、API 配額與錯誤訊息。此頁面是學習入口，沒有實際交易或已連線的分析後端。',checks:['各分頁有輸入驗證與錯誤提示','Secrets 與程式碼分開','已完成端到端操作測試']}
 ];
-const quizzes=[
-['為什麼回測要使用 shift(1)？',['讓策略使用今天收盤後才知道的訊號，在今天就交易','避免使用未來資訊，讓今天的部位只能根據前一天已知訊號決定','讓報酬率變得比較高','讓圖表看起來更平滑'],1,'使用前一期已知訊號決定當期部位，可避免把當期尚未知道的資訊用於交易。'],
-['Sharpe Ratio 代表什麼？',['每承擔一單位風險所得到的超額報酬','策略的最大單日獲利','策略勝率','股票成交量變化'],0,'Sharpe Ratio 以超額報酬除以報酬標準差，用來比較風險調整後績效。'],
-['最大回撤代表什麼？',['策略最高的單日報酬','資金曲線從高點跌到後續低點的最大跌幅','股票最高價與最低價的差距','每年平均報酬'],1,'最大回撤衡量資金曲線從先前高點下跌的最深幅度。'],
-['為什麼勝率高不一定賺錢？',['因為只要勝率高，一定會賺錢','因為如果小賺很多次、一次大賠，總損益仍可能為負','因為勝率和交易結果完全無關','因為勝率只能用在債券市場'],1,'總損益同時取決於勝率、平均獲利、平均虧損與交易成本。'],
-['Gemini API 在網站中負責什麼？',['下載股票價格','執行 Python 回測','生成 AI 分析報告與教學式解讀','取代所有風險管理'],2,'Python 計算數據，Gemini 根據已驗證的資料產生文字解讀。']
-];
 const $=s=>document.querySelector(s);const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function readState(){try{return JSON.parse(localStorage.getItem('ai-lab-progress')||'{}')||{};}catch{return {};}}
-let progress=readState();let selected=0;let answers=Array(5).fill(null);
+let progress=readState();let selected=0;
 function save(){try{localStorage.setItem('ai-lab-progress',JSON.stringify(progress));}catch{}}
 $('#radar').innerHTML=missions.slice(0,4).map((m,i)=>`<div class="radar-row"><span class="icon ${i===1?'purple':i===2?'pink':''}">${m.icon}</span><div><div class="radar-title"><strong>${m.title}</strong><span>${[25,40,55,70][i]}%</span></div><div class="track"><i style="width:${[25,40,55,70][i]}%"></i></div></div></div>`).join('');
 $('#mission-grid').innerHTML=missions.map((m,i)=>`<button class="mission-card" data-mission="${i}"><div class="tags"><span class="tag">${i===5?'Final Mission':`Mission ${i+1}`}</span><span class="tag">${m.level}</span></div><h3>${m.title}</h3><p>${m.desc}</p><b>開始任務 →</b></button>`).join('');
@@ -25,8 +18,4 @@ function showMission(i,scroll=false){selected=i;const m=missions[i];$('#mission-
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-mission]');if(b)showMission(Number(b.dataset.mission),b.classList.contains('mission-card'));if(e.target.closest('#copy-prompt')){try{await navigator.clipboard.writeText(missions[selected].prompt);toast('Prompt 已複製');}catch{toast('無法使用剪貼簿，請選取 Prompt 文字手動複製。');}}});
 document.addEventListener('change',e=>{if(e.target.matches('[data-check]')){progress[e.target.dataset.check]=e.target.checked;save();}});
 function toast(text){$('#toast').textContent=text;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',2600);}
-function renderQuiz(){let score=0;$('#quiz-list').innerHTML=quizzes.map((q,i)=>{const a=answers[i];if(a===q[2])score++;return `<article class="quiz-card"><h3>${i+1}. ${q[0]}</h3><div class="answers">${q[1].map((s,j)=>`<button class="answer ${a!==null?(j===q[2]?'correct':j===a?'wrong':''):''}" data-question="${i}" data-answer="${j}" aria-pressed="${a===j}" ${a!==null?'disabled':''}><span>${'ABCD'[j]}</span>${s}</button>`).join('')}</div>${a!==null?`<p class="feedback" role="status">${a===q[2]?'✓ 答對了！':'再想一想：正確答案是 '+ 'ABCD'[q[2]]+'。'} ${q[3]}</p>`:''}</article>`;}).join('');$('#score').textContent=`${score} / 5`;}
-$('#quiz-list').addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;const i=Number(b.dataset.question);if(answers[i]!==null)return;answers[i]=Number(b.dataset.answer);renderQuiz();});
-$('#reset-quiz').addEventListener('click',()=>{answers.fill(null);renderQuiz();toast('已重設測驗');});
-$('#deliverables').innerHTML=['一份技術分析模組','一份策略回測模組','一份 AI 股票分析報告','一份投資組合建構模組','一份資金管理風險模擬模組','一個 Streamlit AI 智能投資網站'].map((s,i)=>`<div><span>${i+1}</span><strong>${s}</strong></div>`).join('');
-showMission(0);renderQuiz();
+showMission(0);
